@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TESSERACT TECHNOLOGIES</title>
+    <!-- Import Roboto font from Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400&display=swap">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: black;
+            overflow: hidden;
+            font-family: 'Roboto', sans-serif;
+            color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .title {
+            font-size: 4vw;
+            letter-spacing: 0.7vw;
+            font-weight: 100; /* Ultra thin font weight */
+            text-align: center;
+            position: relative;
+            z-index: 10;
+            text-transform: uppercase;
+            margin: 0 0 0.5em 0;
+        }
+        
+        .tagline {
+            font-size: 2vw; /* 40% smaller than the title */
+            letter-spacing: 0.4vw;
+            font-weight: 100; /* Ultra thin font weight */
+            text-align: center;
+            position: relative;
+            z-index: 10;
+            text-transform: uppercase; /* Added uppercase transformation */
+            margin: 0;
+        }
+        
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <h1 class="title">TESSERACT TECHNOLOGIES</h1>
+    <p class="tagline">IT'S OKAY. IT'S ALRIGHT.</p>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+        
+        // Handle resize
+        window.addEventListener('resize', function() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            createDots();
+        });
+        
+        // Mouse position
+        let mouseX = null;
+        let mouseY = null;
+        let lastMouseX = width / 2;
+        let lastMouseY = height / 2;
+        let mouseActive = false;
+        
+        // Track mouse position
+        window.addEventListener('mousemove', function(e) {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            mouseActive = true;
+            
+            // Reset after 2 seconds of no movement
+            clearTimeout(mouseTimer);
+            mouseTimer = setTimeout(() => {
+                mouseActive = false;
+            }, 2000);
+        });
+        
+        let mouseTimer;
+        
+        // Dot configuration
+        const dotSize = 1; // Small dots
+        const dotSpacing = 20;
+        const cols = Math.floor(width / dotSpacing) + 1;
+        const rows = Math.floor(height / dotSpacing) + 1;
+        let dots = [];
+        
+        function createDots() {
+            dots = [];
+            for (let i = 0; i < cols; i++) {
+                dots[i] = [];
+                for (let j = 0; j < rows; j++) {
+                    dots[i][j] = {
+                        x: i * dotSpacing,
+                        y: j * dotSpacing,
+                        originalX: i * dotSpacing,
+                        originalY: j * dotSpacing,
+                        size: dotSize,
+                        opacity: 0.3 + Math.random() * 0.3
+                    };
+                }
+            }
+        }
+        
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = 'white';
+            
+            // Update last mouse position for smooth transitions
+            if (mouseActive && mouseX !== null && mouseY !== null) {
+                lastMouseX = mouseX;
+                lastMouseY = mouseY;
+            }
+            
+            // Draw dots
+            for (let i = 0; i < cols; i++) {
+                for (let j = 0; j < rows; j++) {
+                    const dot = dots[i][j];
+                    
+                    // Reset position when mouse is not active
+                    if (!mouseActive) {
+                        dot.x = dot.originalX;
+                        dot.y = dot.originalY;
+                    } else {
+                        // Calculate distance from mouse
+                        const dx = lastMouseX - dot.originalX;
+                        const dy = lastMouseY - dot.originalY;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        const maxDistance = 150;
+                        
+                        if (distance < maxDistance) {
+                            // Calculate ripple effect
+                            const force = (1 - distance / maxDistance) * 30;
+                            const angle = Math.atan2(dy, dx);
+                            
+                            // Apply forces to dots
+                            dot.x = dot.originalX - Math.cos(angle) * force;
+                            dot.y = dot.originalY - Math.sin(angle) * force;
+                        } else {
+                            // Return to original position
+                            dot.x = dot.originalX;
+                            dot.y = dot.originalY;
+                        }
+                    }
+                    
+                    // Draw dot
+                    ctx.globalAlpha = dot.opacity;
+                    ctx.beginPath();
+                    ctx.arc(dot.x, dot.y, dot.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            
+            requestAnimationFrame(animate);
+        }
+        
+        createDots();
+        animate();
+    </script>
+</body>
+</html>
